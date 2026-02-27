@@ -1,0 +1,41 @@
+{
+  "agent_name": "Strategy Advisor Agent",
+  "agent_id": "69a17462cd4048c3ee3ca47f",
+  "agent_type": "json",
+  "accessor": "json",
+  "has_module_outputs": false,
+  "schema": {
+    "pillar_performance": {
+      "type": "string",
+      "description": "Summary of each pillar's performance"
+    },
+    "top_performing_content": {
+      "type": "string",
+      "description": "What content types resonate most"
+    },
+    "content_gaps": {
+      "type": "string",
+      "description": "Areas needing more attention"
+    },
+    "timing_recommendations": {
+      "type": "string",
+      "description": "Optimal posting schedule adjustments"
+    },
+    "messaging_pivots": {
+      "type": "string",
+      "description": "Suggested messaging strategy shifts"
+    },
+    "competitor_insights": {
+      "type": "string",
+      "description": "Opponent activity observations"
+    },
+    "weekly_priorities": {
+      "type": "string",
+      "description": "Top action items for coming period"
+    },
+    "risk_alerts": {
+      "type": "string",
+      "description": "Emerging risks or opportunities"
+    }
+  }
+}

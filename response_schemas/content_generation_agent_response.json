@@ -1,0 +1,45 @@
+{
+  "agent_name": "Content Generation Agent",
+  "agent_id": "69a17462cd4048c3ee3ca47d",
+  "agent_type": "json",
+  "accessor": "json",
+  "has_module_outputs": false,
+  "schema": {
+    "platform": {
+      "type": "string",
+      "description": "Target platform: WhatsApp, Facebook, or Both"
+    },
+    "pillar": {
+      "type": "string",
+      "description": "Strategic pillar letter and name"
+    },
+    "tone_level": {
+      "type": "string",
+      "description": "Tone level 1-4 with descriptor"
+    },
+    "objective": {
+      "type": "string",
+      "description": "Content objective"
+    },
+    "post_text": {
+      "type": "string",
+      "description": "The campaign post text"
+    },
+    "recommended_time": {
+      "type": "string",
+      "description": "Optimal posting time with reasoning"
+    },
+    "strategic_reasoning": {
+      "type": "string",
+      "description": "Why this content serves the campaign"
+    },
+    "hashtags": {
+      "type": "string",
+      "description": "Relevant hashtags for Facebook"
+    },
+    "call_to_action": {
+      "type": "string",
+      "description": "Specific CTA for audience"
+    }
+  }
+}

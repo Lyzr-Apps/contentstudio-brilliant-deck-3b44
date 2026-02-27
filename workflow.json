@@ -1,0 +1,38 @@
+{
+  "workflow_name": "L27-DCA Campaign Strategy Engine",
+  "workflow_description": "A political campaign communications platform with 3 independent agents for content generation, crisis response, and strategy advising for Hon. Wakili Thomas Maguathi's Lamu County senatorial campaign.",
+  "nodes": [
+    {
+      "id": "input_node",
+      "type": "Input",
+      "label": "User Input",
+      "nodeCategory": "input"
+    },
+    {
+      "id": "content_agent",
+      "type": "Agent",
+      "label": "Content Generation Agent",
+      "nodeCategory": "agent",
+      "agent_id": "69a17462cd4048c3ee3ca47d"
+    },
+    {
+      "id": "crisis_agent",
+      "type": "Agent",
+      "label": "Crisis Response Agent",
+      "nodeCategory": "agent",
+      "agent_id": "69a1747cf03a54d775b55b1e"
+    },
+    {
+      "id": "strategy_agent",
+      "type": "Agent",
+      "label": "Strategy Advisor Agent",
+      "nodeCategory": "agent",
+      "agent_id": "69a17462cd4048c3ee3ca47f"
+    }
+  ],
+  "edges": [
+    { "source": "input_node", "target": "content_agent" },
+    { "source": "input_node", "target": "crisis_agent" },
+    { "source": "input_node", "target": "strategy_agent" }
+  ]
+}

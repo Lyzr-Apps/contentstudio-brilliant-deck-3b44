@@ -1,0 +1,41 @@
+{
+  "agent_name": "Crisis Response Agent",
+  "agent_id": "69a1747cf03a54d775b55b1e",
+  "agent_type": "json",
+  "accessor": "json",
+  "has_module_outputs": false,
+  "schema": {
+    "classification": {
+      "type": "string",
+      "description": "Attack category type"
+    },
+    "threat_level": {
+      "type": "string",
+      "description": "Low/Medium/High/Critical"
+    },
+    "source_analysis": {
+      "type": "string",
+      "description": "Assessment of attacker credibility and reach"
+    },
+    "recommended_strategy": {
+      "type": "string",
+      "description": "Clarify/Reframe/Correct/Elevate/Silence with reasoning"
+    },
+    "draft_response": {
+      "type": "string",
+      "description": "Crafted response text, empty if Silence"
+    },
+    "talking_points": {
+      "type": "string",
+      "description": "Key points for campaign team"
+    },
+    "do_not_say": {
+      "type": "string",
+      "description": "Phrases/topics to avoid"
+    },
+    "escalation_notes": {
+      "type": "string",
+      "description": "Whether escalation is needed"
+    }
+  }
+}
