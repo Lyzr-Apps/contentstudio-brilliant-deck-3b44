@@ -10,9 +10,11 @@ import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { FiAlertTriangle, FiShield, FiChevronDown, FiChevronRight, FiCopy, FiCheck } from 'react-icons/fi'
+import { FiAlertTriangle, FiShield, FiChevronDown, FiChevronRight, FiCopy, FiCheck, FiHeart, FiMessageCircle } from 'react-icons/fi'
 
 const CRISIS_AGENT_ID = '69a1747cf03a54d775b55b1e'
+
+type AnalysisMode = 'defense' | 'support'
 
 interface CrisisResponse {
   classification: string
@@ -54,8 +56,9 @@ function formatInlineContent(text: string) {
   )
 }
 
-function getThreatColor(level: string): string {
+function getSentimentColor(level: string): string {
   const l = (level ?? '').toLowerCase()
+  if (l.includes('positive')) return 'bg-green-700 text-white'
   if (l.includes('critical')) return 'bg-red-700 text-white'
   if (l.includes('high')) return 'bg-orange-600 text-white'
   if (l.includes('medium')) return 'bg-yellow-600 text-white'
@@ -64,7 +67,8 @@ function getThreatColor(level: string): string {
 }
 
 export default function RapidResponse({ setActiveAgentId }: RapidResponseProps) {
-  const [attackText, setAttackText] = useState<string>('')
+  const [mode, setMode] = useState<AnalysisMode>('defense')
+  const [inputText, setInputText] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [response, setResponse] = useState<CrisisResponse | null>(null)
@@ -76,9 +80,14 @@ export default function RapidResponse({ setActiveAgentId }: RapidResponseProps) 
   const [copied, setCopied] = useState(false)
   const [approved, setApproved] = useState(false)
 
+  const isSupport = mode === 'support'
+
   const handleAnalyze = async () => {
-    if (!attackText.trim()) {
-      setError('Please paste the criticism or attack text to analyze.')
+    if (!inputText.trim()) {
+      setError(isSupport
+        ? 'Please paste the supportive caption or post to analyze.'
+        : 'Please paste the criticism or attack text to analyze.'
+      )
       return
     }
     setLoading(true)
@@ -88,8 +97,13 @@ export default function RapidResponse({ setActiveAgentId }: RapidResponseProps) 
     setActiveAgentId(CRISIS_AGENT_ID)
 
     try {
+      const prefix = isSupport ? '[SUPPORT_MODE]' : '[DEFENSE_MODE]'
+      const contextLabel = isSupport
+        ? 'Analyze this supportive caption about the incoming senator and generate an amplifying response'
+        : 'Analyze this criticism/attack and generate a defensive response'
+
       const result = await callAIAgent(
-        `Analyze this criticism/attack: ${attackText}`,
+        `${prefix} ${contextLabel}: ${inputText}`,
         CRISIS_AGENT_ID
       )
 
@@ -135,34 +149,83 @@ export default function RapidResponse({ setActiveAgentId }: RapidResponseProps) 
     setApproved(true)
   }
 
+  const handleModeSwitch = (newMode: AnalysisMode) => {
+    setMode(newMode)
+    setResponse(null)
+    setEditableResponse('')
+    setError(null)
+    setApproved(false)
+    setInputText('')
+  }
+
   const isSilenceStrategy = (response?.recommended_strategy ?? '').toLowerCase().includes('silence')
+  const isPositiveResult = (response?.threat_level ?? '').toLowerCase().includes('positive') || (response?.classification ?? '').toLowerCase().includes('supporter')
 
   return (
     <ScrollArea className="h-full">
       <div className="space-y-6 pb-6">
+        {/* Mode Toggle */}
+        <div className="flex gap-1 bg-muted rounded-lg p-1 max-w-md">
+          <button
+            onClick={() => handleModeSwitch('defense')}
+            className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center gap-2 ${mode === 'defense' ? 'bg-accent text-accent-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            <FiShield className="w-4 h-4" />
+            Defense Mode
+          </button>
+          <button
+            onClick={() => handleModeSwitch('support')}
+            className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center gap-2 ${mode === 'support' ? 'bg-accent text-accent-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            <FiHeart className="w-4 h-4" />
+            Caption Analyzer
+          </button>
+        </div>
+
         {/* Input Area */}
         <Card className="bg-card border-border">
           <CardHeader className="pb-3">
             <CardTitle className="font-serif tracking-wide text-lg flex items-center gap-2">
-              <FiShield className="w-5 h-5 text-accent" />
-              Crisis Analysis
+              {isSupport ? (
+                <>
+                  <FiMessageCircle className="w-5 h-5 text-accent" />
+                  Caption Analyzer
+                </>
+              ) : (
+                <>
+                  <FiShield className="w-5 h-5 text-accent" />
+                  Crisis Analysis
+                </>
+              )}
             </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              {isSupport
+                ? 'Paste a supportive caption or post about the incoming senator. The engine will analyze it and generate a strategic amplifying response.'
+                : 'Paste a criticism, attack, or negative content. The engine will classify it and draft a disciplined defense.'
+              }
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label className="text-sm font-sans text-muted-foreground">
-                Paste the criticism, attack, or negative content below
+                {isSupport
+                  ? 'Paste the supportive caption or post below'
+                  : 'Paste the criticism, attack, or negative content below'
+                }
               </Label>
               <Textarea
-                placeholder="Paste the full text of the criticism or attack here. Include the source if known (e.g., social media post, news article, opposition statement)..."
-                value={attackText}
-                onChange={(e) => setAttackText(e.target.value)}
+                placeholder={isSupport
+                  ? 'Paste the supporter\'s caption, social media post, or message of support for the incoming senator...'
+                  : 'Paste the full text of the criticism or attack here. Include the source if known (e.g., social media post, news article, opposition statement)...'
+                }
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
                 className="bg-input border-border min-h-[140px] resize-none text-sm leading-relaxed"
               />
             </div>
             <Button
               onClick={handleAnalyze}
-              disabled={loading || !attackText.trim()}
+              disabled={loading || !inputText.trim()}
               className="bg-accent text-accent-foreground hover:bg-accent/90 font-sans"
             >
               {loading ? (
@@ -170,6 +233,8 @@ export default function RapidResponse({ setActiveAgentId }: RapidResponseProps) 
                   <span className="w-4 h-4 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin" />
                   Analyzing...
                 </span>
+              ) : isSupport ? (
+                'Analyze & Amplify'
               ) : (
                 'Analyze & Respond'
               )}
@@ -204,17 +269,17 @@ export default function RapidResponse({ setActiveAgentId }: RapidResponseProps) 
         {!loading && response && (
           <div className="space-y-4">
             {/* Classification Panel */}
-            <Card className="bg-card border-border">
+            <Card className={`bg-card border-border ${isPositiveResult ? 'border-l-4 border-l-green-600' : ''}`}>
               <CardContent className="p-5">
                 <div className="flex flex-wrap gap-3 items-center mb-4">
                   {response.classification && (
-                    <Badge variant="outline" className="text-sm py-1 px-3">
-                      <FiAlertTriangle className="w-3.5 h-3.5 mr-1.5" />
+                    <Badge variant="outline" className={`text-sm py-1 px-3 ${isPositiveResult ? 'border-green-600/50 text-green-400' : ''}`}>
+                      {isPositiveResult ? <FiHeart className="w-3.5 h-3.5 mr-1.5" /> : <FiAlertTriangle className="w-3.5 h-3.5 mr-1.5" />}
                       {response.classification}
                     </Badge>
                   )}
                   {response.threat_level && (
-                    <Badge className={`text-sm py-1 px-3 ${getThreatColor(response.threat_level)}`}>
+                    <Badge className={`text-sm py-1 px-3 ${getSentimentColor(response.threat_level)}`}>
                       {response.threat_level}
                     </Badge>
                   )}
@@ -222,7 +287,9 @@ export default function RapidResponse({ setActiveAgentId }: RapidResponseProps) 
 
                 {response.recommended_strategy && (
                   <div className="mb-4">
-                    <Label className="text-xs font-sans text-muted-foreground">Recommended Strategy</Label>
+                    <Label className="text-xs font-sans text-muted-foreground">
+                      {isPositiveResult ? 'Recommended Action' : 'Recommended Strategy'}
+                    </Label>
                     <div className="mt-1 text-sm leading-relaxed">{renderMarkdown(response.recommended_strategy)}</div>
                   </div>
                 )}
@@ -232,10 +299,10 @@ export default function RapidResponse({ setActiveAgentId }: RapidResponseProps) 
                   <Collapsible open={sourceOpen} onOpenChange={setSourceOpen}>
                     <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full mt-2">
                       {sourceOpen ? <FiChevronDown className="w-4 h-4" /> : <FiChevronRight className="w-4 h-4" />}
-                      Source Analysis
+                      {isPositiveResult ? 'Message Analysis' : 'Source Analysis'}
                     </CollapsibleTrigger>
                     <CollapsibleContent className="pt-2">
-                      <div className="p-3 rounded-md bg-muted/30 border border-border text-sm leading-relaxed">
+                      <div className={`p-3 rounded-md border text-sm leading-relaxed ${isPositiveResult ? 'bg-green-900/10 border-green-800/30' : 'bg-muted/30 border-border'}`}>
                         {renderMarkdown(response.source_analysis)}
                       </div>
                     </CollapsibleContent>
@@ -245,10 +312,17 @@ export default function RapidResponse({ setActiveAgentId }: RapidResponseProps) 
             </Card>
 
             {/* Draft Response Panel */}
-            {!isSilenceStrategy && (
+            {(!isSilenceStrategy || isPositiveResult) && (
               <Card className="bg-card border-border">
                 <CardHeader className="pb-3">
-                  <CardTitle className="font-serif tracking-wide text-base">Draft Response</CardTitle>
+                  <CardTitle className="font-serif tracking-wide text-base">
+                    {isPositiveResult ? 'Supportive Reply' : 'Draft Response'}
+                  </CardTitle>
+                  {isPositiveResult && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      This response amplifies the supporter's message and strengthens the pro-Maguathi narrative. Edit as needed, then approve for use.
+                    </p>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <Textarea
@@ -267,17 +341,17 @@ export default function RapidResponse({ setActiveAgentId }: RapidResponseProps) 
               </Card>
             )}
 
-            {/* Talking Points, Do Not Say, Escalation */}
+            {/* Talking Points, Do Not Say, Escalation/Opportunities */}
             <Card className="bg-card border-border">
               <CardContent className="p-5 space-y-3">
                 {response.talking_points && (
                   <Collapsible open={talkingPointsOpen} onOpenChange={setTalkingPointsOpen}>
                     <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full">
                       {talkingPointsOpen ? <FiChevronDown className="w-4 h-4" /> : <FiChevronRight className="w-4 h-4" />}
-                      Talking Points
+                      {isPositiveResult ? 'Amplification Points' : 'Talking Points'}
                     </CollapsibleTrigger>
                     <CollapsibleContent className="pt-2">
-                      <div className="p-3 rounded-md bg-muted/30 border border-border text-sm leading-relaxed">
+                      <div className={`p-3 rounded-md border text-sm leading-relaxed ${isPositiveResult ? 'bg-green-900/10 border-green-800/30' : 'bg-muted/30 border-border'}`}>
                         {renderMarkdown(response.talking_points)}
                       </div>
                     </CollapsibleContent>
@@ -288,7 +362,7 @@ export default function RapidResponse({ setActiveAgentId }: RapidResponseProps) 
                   <Collapsible open={doNotSayOpen} onOpenChange={setDoNotSayOpen}>
                     <CollapsibleTrigger className="flex items-center gap-2 text-sm text-destructive hover:text-destructive/80 transition-colors w-full">
                       {doNotSayOpen ? <FiChevronDown className="w-4 h-4" /> : <FiChevronRight className="w-4 h-4" />}
-                      Do Not Say
+                      {isPositiveResult ? 'Tone Guardrails' : 'Do Not Say'}
                     </CollapsibleTrigger>
                     <CollapsibleContent className="pt-2">
                       <div className="p-3 rounded-md bg-destructive/5 border border-destructive/20 text-sm leading-relaxed">
@@ -300,12 +374,12 @@ export default function RapidResponse({ setActiveAgentId }: RapidResponseProps) 
 
                 {response.escalation_notes && (
                   <Collapsible open={escalationOpen} onOpenChange={setEscalationOpen}>
-                    <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full">
+                    <CollapsibleTrigger className={`flex items-center gap-2 text-sm transition-colors w-full ${isPositiveResult ? 'text-accent hover:text-accent/80' : 'text-muted-foreground hover:text-foreground'}`}>
                       {escalationOpen ? <FiChevronDown className="w-4 h-4" /> : <FiChevronRight className="w-4 h-4" />}
-                      Escalation Notes
+                      {isPositiveResult ? 'Leverage Opportunities' : 'Escalation Notes'}
                     </CollapsibleTrigger>
                     <CollapsibleContent className="pt-2">
-                      <div className="p-3 rounded-md bg-muted/30 border border-border text-sm leading-relaxed">
+                      <div className={`p-3 rounded-md border text-sm leading-relaxed ${isPositiveResult ? 'bg-accent/5 border-accent/20' : 'bg-muted/30 border-border'}`}>
                         {renderMarkdown(response.escalation_notes)}
                       </div>
                     </CollapsibleContent>
@@ -319,21 +393,21 @@ export default function RapidResponse({ setActiveAgentId }: RapidResponseProps) 
               {approved ? (
                 <Badge className="bg-green-700 text-white py-2 px-4 text-sm">
                   <FiCheck className="w-4 h-4 mr-1.5" />
-                  Response Approved
+                  {isPositiveResult ? 'Reply Approved' : 'Response Approved'}
                 </Badge>
               ) : (
                 <>
-                  {!isSilenceStrategy && (
-                    <Button onClick={handleApproveResponse} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                      Approve Response
-                    </Button>
-                  )}
+                  <Button onClick={handleApproveResponse} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                    {isPositiveResult ? 'Approve Reply' : 'Approve Response'}
+                  </Button>
                   <Button variant="outline" onClick={() => setEditableResponse(response?.draft_response ?? '')}>
                     Reset Edit
                   </Button>
-                  <Button variant="outline" onClick={handleAdoptSilence} className="text-muted-foreground">
-                    Adopt Silence
-                  </Button>
+                  {!isPositiveResult && (
+                    <Button variant="outline" onClick={handleAdoptSilence} className="text-muted-foreground">
+                      Adopt Silence
+                    </Button>
+                  )}
                 </>
               )}
             </div>
