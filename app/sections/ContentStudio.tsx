@@ -18,6 +18,7 @@ import { BsWhatsapp, BsFacebook } from 'react-icons/bs'
 const CONTENT_AGENT_ID = '69a17462cd4048c3ee3ca47d'
 
 const PILLARS = [
+  { value: 'General', label: 'General Campaign Content' },
   { value: 'A', label: 'A - Economic Development' },
   { value: 'B', label: 'B - Infrastructure & Connectivity' },
   { value: 'C', label: 'C - Education & Skills' },
@@ -31,6 +32,8 @@ const OBJECTIVES = [
   { value: 'Narrative Control', label: 'Narrative Control' },
   { value: 'Mobilization', label: 'Mobilization' },
   { value: 'Rebuttal', label: 'Rebuttal' },
+  { value: 'Voter Rally', label: 'Voter Rally' },
+  { value: 'Endorsement', label: 'Endorsement' },
 ]
 
 interface ContentDraft {
@@ -79,7 +82,10 @@ function formatInlineContent(text: string) {
 }
 
 function getPillarColor(pillar: string): string {
-  const letter = pillar?.charAt(0)?.toUpperCase() ?? ''
+  if (!pillar) return 'bg-muted text-muted-foreground'
+  const lower = pillar.toLowerCase()
+  if (lower.includes('general')) return 'bg-secondary text-secondary-foreground'
+  const letter = pillar.charAt(0).toUpperCase()
   switch (letter) {
     case 'A': return 'bg-[hsl(27,61%,35%)] text-white'
     case 'B': return 'bg-[hsl(36,60%,31%)] text-white'
@@ -104,18 +110,15 @@ export default function ContentStudio({ onApprove, setActiveAgentId }: ContentSt
   const [copied, setCopied] = useState(false)
 
   const handleGenerate = async () => {
-    if (!pillar) {
-      setError('Please select a strategic pillar.')
-      return
-    }
     setLoading(true)
     setError(null)
     setDraft(null)
     setActiveAgentId(CONTENT_AGENT_ID)
 
     try {
-      const pillarLabel = PILLARS.find(p => p.value === pillar)?.label ?? pillar
-      const message = `Generate campaign content for: Platform: ${platform}, Pillar: ${pillarLabel}, Objective: ${objective}${context ? `, Context: ${context}` : ''}`
+      const pillarLabel = pillar ? (PILLARS.find(p => p.value === pillar)?.label ?? pillar) : 'General Campaign Content'
+      const pillarInstruction = pillar && pillar !== 'General' ? `Pillar: ${pillarLabel}` : 'Pillar: General (create general campaign content not tied to a specific pillar)'
+      const message = `Generate campaign content for Hon. Wakili Thomas Maguathi: Platform: ${platform}, ${pillarInstruction}, Objective: ${objective}${context ? `, Context: ${context}` : ''}`
       const result = await callAIAgent(message, CONTENT_AGENT_ID)
 
       if (result?.success) {
@@ -200,10 +203,10 @@ export default function ContentStudio({ onApprove, setActiveAgentId }: ContentSt
 
             {/* Pillar Selector */}
             <div className="space-y-2">
-              <Label className="text-sm font-sans text-muted-foreground">Strategic Pillar</Label>
-              <Select value={pillar} onValueChange={setPillar}>
+              <Label className="text-sm font-sans text-muted-foreground">Content Type</Label>
+              <Select value={pillar || 'General'} onValueChange={setPillar}>
                 <SelectTrigger className="bg-input border-border">
-                  <SelectValue placeholder="Select pillar..." />
+                  <SelectValue placeholder="Select content type..." />
                 </SelectTrigger>
                 <SelectContent>
                   {PILLARS.map((p) => (
@@ -211,6 +214,7 @@ export default function ContentStudio({ onApprove, setActiveAgentId }: ContentSt
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">Choose a strategic pillar or select General for any campaign content</p>
             </div>
 
             {/* Objective */}
@@ -243,7 +247,7 @@ export default function ContentStudio({ onApprove, setActiveAgentId }: ContentSt
             {/* Generate Button */}
             <Button
               onClick={handleGenerate}
-              disabled={loading || !pillar}
+              disabled={loading}
               className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-sans"
             >
               {loading ? (
@@ -297,7 +301,7 @@ export default function ContentStudio({ onApprove, setActiveAgentId }: ContentSt
               </div>
               <h3 className="font-serif tracking-wide text-lg mb-2">Ready to Create</h3>
               <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
-                Configure your content parameters on the left and click Generate to create campaign content tailored to your strategy.
+                Generate any campaign content for Wakili Thomas Maguathi. Choose a strategic pillar for focused messaging, or use General for rallies, mobilization, endorsements, and more.
               </p>
             </CardContent>
           </Card>

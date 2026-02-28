@@ -89,6 +89,7 @@ const PILLARS: Record<string, { label: string; color: string }> = {
   D: { label: 'Healthcare Access', color: 'bg-[hsl(20,45%,45%)]' },
   E: { label: 'Cultural Heritage & Unity', color: 'bg-[hsl(15,55%,38%)]' },
   F: { label: 'Security & Governance', color: 'bg-accent' },
+  G: { label: 'General Campaign', color: 'bg-secondary' },
 }
 
 type Screen = 'dashboard' | 'content' | 'rapid' | 'strategy' | 'calendar'
@@ -119,6 +120,7 @@ interface CalendarEvent {
 
 function getPillarLetter(pillarStr: string): string {
   if (!pillarStr) return ''
+  if (pillarStr.toLowerCase().includes('general')) return 'G'
   const first = pillarStr.charAt(0).toUpperCase()
   if (PILLARS[first]) return first
   return ''
